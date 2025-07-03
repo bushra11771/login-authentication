@@ -16,7 +16,7 @@ export default function RegisterPage() {
     e.preventDefault();
     const result = await dispatch(registerUser({ name, email, password }));
     if (result.meta.requestStatus === 'fulfilled') {
-      router.push('/dashboard');
+      router.push('/login')
     }
   };
 
