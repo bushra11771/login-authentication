@@ -10,7 +10,8 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const dispatch = useDispatch();
   const router = useRouter();
-  const { loading, error, user } = useSelector((state) => state.auth);
+  const { loading, error } = useSelector((state) => state.auth);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,6 +20,7 @@ export default function RegisterPage() {
       router.push('/login')
     }
   };
+
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
@@ -57,5 +59,6 @@ export default function RegisterPage() {
         Already have an account? <a href="/login" className="text-blue-600 underline">Login</a>
       </p>
     </div>
+
   );
 } 
