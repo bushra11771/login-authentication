@@ -26,22 +26,30 @@ const getInitialStateFromStorage = () => {
       loading: false,
       error: null,
       isAuthenticated: false,
+      status: 'idle',
     };
   }
 
   try {
     const authData = localStorage.getItem('authData');
+    console.log("Found authData in localStorage:", authData); 
+
     if (authData) {
       const parsedData = JSON.parse(authData);
       const { user, token } = parsedData;
+      console.log("Token exists?", !!token); 
+      console.log("Token expired?", isTokenExpired(token));
       
       if (token && !isTokenExpired(token)) {
+        console.log("Returning authenticated state"); 
+
         return {
           user,
           token,
           loading: false,
           error: null,
           isAuthenticated: true,
+          status: 'succeeded',
         };
       } else {
         // Token expired, clear storage
@@ -59,6 +67,7 @@ const getInitialStateFromStorage = () => {
     loading: false,
     error: null,
     isAuthenticated: false,
+    status: 'idle',
   };
 };
 
@@ -110,11 +119,15 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    setUser: (state, action) => {
+      state.user = action.payload;
+    },
     logout: (state) => {
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
       state.error = null;
+      state.status = 'idle';
       localStorage.removeItem('authData');
     },
     clearError: (state) => {
@@ -133,11 +146,13 @@ const authSlice = createSlice({
             state.user = user;
             state.token = token;
             state.isAuthenticated = true;
+            state.status = 'succeeded';
           } else {
             // Token expired
             state.user = null;
             state.token = null;
             state.isAuthenticated = false;
+            state.status = 'idle';
             localStorage.removeItem('authData');
           }
         }
@@ -147,6 +162,7 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
+        state.status = 'idle';
       }
     }
   },
@@ -154,15 +170,21 @@ const authSlice = createSlice({
     builder
       // Login cases
       .addCase(loginUser.pending, (state) => {
+        console.log('Login status', action.payload);
+
         state.loading = true;
         state.error = null;
+        state.status = 'loading';
       })
       .addCase(loginUser.fulfilled, (state, action) => {
+        console.error('Login failed', action.payload);
+
         state.loading = false;
         state.user = action.payload.user;
         state.token = action.payload.jwt;
         state.isAuthenticated = true;
         state.error = null;
+        state.status = 'succeeded';
         
         // Save auth data to storage
         localStorage.setItem('authData', JSON.stringify({
@@ -176,12 +198,14 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
+        state.status = 'failed';
       })
       
       // Registration cases
       .addCase(registerUser.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.status = 'loading';
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
@@ -189,11 +213,12 @@ const authSlice = createSlice({
         state.token = action.payload.jwt;
         state.isAuthenticated = true;
         state.error = null;
+        state.status = 'succeeded';
         
         // Save auth data to storage
         localStorage.setItem('authData', JSON.stringify({
           user: action.payload.user,
-          token: action.payload.token
+          token: action.payload.jwt
         }));
       })
       .addCase(registerUser.rejected, (state, action) => {
@@ -202,9 +227,10 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
+        state.status = 'failed';
       });
   },
 });
 
-export const { logout, clearError, loadUserFromStorage } = authSlice.actions;
+export const {setUser, logout, clearError, loadUserFromStorage } = authSlice.actions;
 export default authSlice.reducer;
