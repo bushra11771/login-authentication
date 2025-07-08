@@ -10,7 +10,6 @@ const isTokenExpired = (token) => {
     const decodedToken = jwtDecode(token);
     const currentTime = Date.now() / 1000;
     return decodedToken.exp < currentTime;
-  
   } catch (error) {
     console.error('Invalid token:', error);
     return true;
@@ -42,7 +41,6 @@ const getInitialStateFromStorage = () => {
       
       if (token && !isTokenExpired(token)) {
         console.log("Returning authenticated state"); 
-
         return {
           user,
           token,
@@ -76,12 +74,18 @@ export const loginUser = createAsyncThunk(
   'auth/login',
   async ({ email, password }, { rejectWithValue }) => {
     try {
+      console.log('Attempting login with:', { email, password }); // Log the credentials being sent
+      
       const response = await axios.post('/auth/login', {
         email,
         password
       });
+      
+      console.log('Login response:', response.data); // Log the successful response
       return response.data;
     } catch (error) {
+      console.error('Login error:', error.response?.data || error.message); // Log the error details
+      
       if (error.response?.data?.message) {
         return rejectWithValue(error.response.data.message);
       } else {
@@ -170,15 +174,13 @@ const authSlice = createSlice({
     builder
       // Login cases
       .addCase(loginUser.pending, (state) => {
-        console.log('Login status', action.payload);
-
+        console.log('Login request started');
         state.loading = true;
         state.error = null;
         state.status = 'loading';
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-        console.error('Login failed', action.payload);
-
+        console.log('Login successful - payload:', action.payload);
         state.loading = false;
         state.user = action.payload.user;
         state.token = action.payload.jwt;
@@ -186,13 +188,13 @@ const authSlice = createSlice({
         state.error = null;
         state.status = 'succeeded';
         
-        // Save auth data to storage
         localStorage.setItem('authData', JSON.stringify({
           user: action.payload.user,
           token: action.payload.jwt
         }));
       })
       .addCase(loginUser.rejected, (state, action) => {
+        console.log('Login failed - error:', action.payload);
         state.loading = false;
         state.error = action.payload || 'Login failed';
         state.user = null;
@@ -200,7 +202,6 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.status = 'failed';
       })
-      
       // Registration cases
       .addCase(registerUser.pending, (state) => {
         state.loading = true;
@@ -215,7 +216,6 @@ const authSlice = createSlice({
         state.error = null;
         state.status = 'succeeded';
         
-        // Save auth data to storage
         localStorage.setItem('authData', JSON.stringify({
           user: action.payload.user,
           token: action.payload.jwt
@@ -232,5 +232,5 @@ const authSlice = createSlice({
   },
 });
 
-export const {setUser, logout, clearError, loadUserFromStorage } = authSlice.actions;
+export const { setUser, logout, clearError, loadUserFromStorage } = authSlice.actions;
 export default authSlice.reducer;

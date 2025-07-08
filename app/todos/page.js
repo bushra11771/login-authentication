@@ -1,12 +1,11 @@
 'use client';
-
-import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchTodos, selectAllTodos, selectTodoStatus, selectTodoError } from '../../redux/todoSlice';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../ProtectedRoute';
 import TodoForm from '@app/components/TodoForm';
 import TodoItem from '@app/components/TodoItem';
+import {logout} from "../../redux/authSlice"
 
 export default function TodosPage() {
   const dispatch = useDispatch();
@@ -16,7 +15,10 @@ export default function TodosPage() {
   const {user} = useSelector((state) => state.auth);
   const router = useRouter();
   
- 
+ const handleLogout = () => {
+     dispatch(logout());
+     window.location.href = '/login';
+   };
 
   return (
     <ProtectedRoute>
@@ -28,6 +30,7 @@ export default function TodosPage() {
               <span className="text-gray-600">Welcome, {user?.username}</span>
               <button
                 onClick={() => {dispatch(logout())
+                {handleLogout};
                  localStorage.removeItem('token');
                  localStorage.removeItem('user');
                   router.push('/login');

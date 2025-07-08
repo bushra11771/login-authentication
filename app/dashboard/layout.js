@@ -8,15 +8,6 @@ function layout() {
   const user = useSelector((state) => state.auth.user);
     const router = useRouter();
   
-
-  // useEffect(() => {
-  //   console.log("login", "login")
-  //   if (user === null) 
-  //     return
-  //   if (!user) {
-  //     router.push('/login');
-  //   }
-  // }, [user, router]);
   return (
     <div>
 
