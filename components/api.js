@@ -6,11 +6,11 @@ const api = axios.create({
 
 // Add request interceptor to include auth token
 api.interceptors.request.use((config) => {
-  const user = localStorage.getItem('user');
+  const authData = localStorage.getItem('authData');
   let token = null;
-  if (user) {
+  if (authData) {
     try {
-      token = JSON.parse(user).token;
+      token = JSON.parse(authData).token;
     } catch (e) {
       token = null;
     }
@@ -27,7 +27,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('user');
+      localStorage.removeItem('authData');
       window.location.href = '/login';
     }
     return Promise.reject(error);

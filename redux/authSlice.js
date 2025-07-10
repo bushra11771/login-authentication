@@ -20,6 +20,7 @@ const isTokenExpired = (token) => {
 const getInitialStateFromStorage = () => {
   if (typeof window === 'undefined') {
     return {
+      todos: [],
       user: null,
       token: null,
       loading: false,

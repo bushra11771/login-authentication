@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { addTodo } from '../redux/todoSlice';
+import { fetchTodos } from '../redux/todoSlice';
 
 export default function TodoForm() {
   const dispatch = useDispatch();
@@ -11,32 +12,55 @@ export default function TodoForm() {
   const [dueDate, setDueDate] = useState('');
   const [error, setError] = useState('');
 
+  // Get user from Redux store (adjust the path based on your store structure)
+  const user = useSelector(state => state.auth?.user || state.user);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-  
+
     if (!title.trim()) {
       setError('Title is required');
       return;
     }
-  
+
+    if (!user) {
+      setError('User not authenticated');
+      return;
+    }
+
     try {
-      await dispatch(
+      console.log('Adding todo with data:', {
+        title,
+        description,
+        dueDate: dueDate || undefined,
+        user,
+        userId: user._id
+      });
+
+      const result = await dispatch(
         addTodo({
           title,
           description,
           dueDate: dueDate || undefined,
+          user,
+          userId: user._id // Make sure to include userId
         })
       ).unwrap();
-  
+
+      console.log('Add todo result:', result);
+
       // Reset form
       setTitle('');
       setDescription('');
       setDueDate('');
-  
+
       // Refetch todos to update the list
-      dispatch(fetchTodos());
+      console.log('Fetching todos...');
+      const fetchResult = await dispatch(fetchTodos(user._id)).unwrap();
+      console.log('Fetch todos result:', fetchResult);
     } catch (error) {
+      console.error('Error in handleSubmit:', error);
       setError(error.message || 'Failed to add todo');
     }
   };
@@ -99,7 +123,6 @@ export default function TodoForm() {
       >
         Add Todo
       </button>
-
     </form>
   );
 }
