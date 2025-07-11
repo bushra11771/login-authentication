@@ -43,8 +43,8 @@ export default function TodoForm() {
           title,
           description,
           dueDate: dueDate || undefined,
-          user,
-          userId: user._id // Make sure to include userId
+
+        
         })
       ).unwrap();
 
@@ -57,8 +57,8 @@ export default function TodoForm() {
 
       // Refetch todos to update the list
       console.log('Fetching todos...');
-      const fetchResult = await dispatch(fetchTodos(user._id)).unwrap();
-      console.log('Fetch todos result:', fetchResult);
+      // const fetchResult = await dispatch(fetchTodos(user._id)).unwrap();
+      // console.log('Fetch todos result:', fetchResult);
     } catch (error) {
       console.error('Error in handleSubmit:', error);
       setError(error.message || 'Failed to add todo');

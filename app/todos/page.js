@@ -15,9 +15,7 @@ export default function TodosPage() {
   const {user} = useSelector((state) => state.auth);
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
-  
   const todos = useSelector(selectAllTodos);
-  
   console.log("Todos array:", todos);
 
   useEffect(() => {
@@ -81,9 +79,9 @@ export default function TodosPage() {
               
               <div className="space-y-4">
                 {todos.length === 0 ? (
-                  <div className="bg-white p-6 rounded-lg shadow text-center">
+                  <div>
                     <p className="text-gray-500">
-                      {status === 'loading' ? 'Loading todos...' : 'No todos found. Add a new todo to get started!'}
+                      {/* {status === 'loading' ? 'Loading todos...' : 'No todos found. Add a new todo to get started!'} */}
                     </p>
                   </div>
                 ) : (
