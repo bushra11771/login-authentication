@@ -20,12 +20,22 @@ export const addTodo = createAsyncThunk(
     try {
       const { auth } = getState();
       const token = auth?.token;
+console.log('todoData:', todoData);
+      // Use FormData for file uploads if needed
+      const formData = new FormData();
+      formData.append('title', todoData.title);
+      formData.append('description', todoData.description || '');
+      if (todoData.dueDate) formData.append('dueDate', todoData.dueDate);
+      if (todoData.image) formData.append('image', todoData.image);
 
-      const response = await axios.post('/api/todos', todoData, {
+      const response = await axios.post('/api/todos', formData, {
         headers: {
+          'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${token}`
         },
       });
+
+      // The backend should handle sending the email notification
       return response.data;
     } catch (err) {
       if (err.response) {
@@ -35,31 +45,6 @@ export const addTodo = createAsyncThunk(
     }
   }
 );
-
-// export const addTodo = createAsyncThunk(
-//   'todos/addTodo',
-//   async (todoData, { getState, rejectWithValue }) => {
-//     try {
-//       const { auth } = getState(); // Get the current Redux state
-//       const token = auth?.token; // Extract token from auth state
-
-//       const response = await axios.post('/api/todos', todoData, {
-//         headers: {
-//           'Content-Type': 'multipart/form-data',
-//           'Authorization': `Bearer ${token}` 
-//         },
-//       });
-//       return response.data;
-//     } catch (err) {
-//       // Error handling remains the same
-//       if (err.response) {
-//         return rejectWithValue(err.response.data);
-//       }
-//       return rejectWithValue({ message: err.message });
-//     }
-//   }
-// );
-
 
 export const updateTodo = createAsyncThunk(
   'todos/updateTodo',
@@ -91,8 +76,13 @@ const todoSlice = createSlice({
     items: [],
     status: 'idle',
     error: null,
+    lastAddedTodo: null // Track the last added todo for notifications
   },
-  reducers: {},
+  reducers: {
+    clearLastAddedTodo: (state) => {
+      state.lastAddedTodo = null;
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchTodos.pending, (state) => {
@@ -111,7 +101,8 @@ const todoSlice = createSlice({
       })
       .addCase(addTodo.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.items = [...state.items, action.payload]; 
+        state.items = [...state.items, action.payload];
+        state.lastAddedTodo = action.payload; // Store the last added todo
       })
       .addCase(addTodo.rejected, (state, action) => {
         state.status = 'failed';
@@ -129,9 +120,11 @@ const todoSlice = createSlice({
   },
 });
 
+export const { clearLastAddedTodo } = todoSlice.actions;
 export default todoSlice.reducer;
 
 // Selectors
 export const selectAllTodos = (state) => state.todos.items;
 export const selectTodoStatus = (state) => state.todos.status;
 export const selectTodoError = (state) => state.todos.error;
+export const selectLastAddedTodo = (state) => state.todos.lastAddedTodo;
