@@ -1,15 +1,32 @@
 "use client";
-import LoginPage from "./login/page";
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import DashboardRoute from './dashboard/page';
+import ProtectedRoute from './ProtectedRoute';
+import SuperAdminDashboard from '../components/SuperAdminDashboard';
 
-
-
-export default function Page({pageProps}) {
-  
-
+function AppRoutes() {
   return (
-    <>
-      
-      <LoginPage {...pageProps} />
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardRoute />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <SuperAdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }
+
+export default AppRoutes;

@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../components/api';
 import axios from 'axios';
-
 export const fetchTodos = createAsyncThunk(
   'todos/fetchTodos',
   async (userId, { rejectWithValue }) => {
@@ -10,6 +9,19 @@ export const fetchTodos = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
+    }
+  }
+);
+export const fetchAllTodos = createAsyncThunk(
+  'todos/fetchAllTodos',
+  async (_userId, { getState, rejectWithValue }) => {
+    try {
+      const { auth } = getState();
+      const config = { headers: { Authorization: `Bearer ${auth.token}` } };
+      const { data } = await axios.get('/api/todos/all', config);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || error.message);
     }
   }
 );
@@ -45,27 +57,29 @@ console.log('todoData:', todoData);
     }
   }
 );
-
 export const updateTodo = createAsyncThunk(
   'todos/updateTodo',
-  async ({ id, todoData }, { rejectWithValue }) => {
+  async ({ id, todoData }, { getState, rejectWithValue }) => {
     try {
-      const response = await api.put(`/todos/${id}`, todoData);
-      return response.data;
+      const { auth } = getState();
+      const config = { headers: { Authorization: `Bearer ${auth.token}` } };
+      const { data } = await axios.put(`/api/todos/${id}`, todoData, config);
+      return data;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.response?.data?.error || error.message);
     }
   }
 );
-
 export const deleteTodo = createAsyncThunk(
   'todos/deleteTodo',
-  async (id, { rejectWithValue }) => {
+  async (id, { getState, rejectWithValue }) => {
     try {
-      await api.delete(`/todos/${id}`);
+      const { auth } = getState();
+      const config = { headers: { Authorization: `Bearer ${auth.token}` } };
+      await axios.delete(`/api/todos/${id}`, config);
       return id;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.response?.data?.error || error.message);
     }
   }
 );

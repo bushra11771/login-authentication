@@ -147,7 +147,7 @@ const authSlice = createSlice({
           const { user, token } = parsedData;
           
           if (token && !isTokenExpired(token)) {
-            console.log('User loaded from storage:', user);
+            // console.log('User loaded from storage:', user);
             state.user = user;
             state.token = token;
             state.isAuthenticated = true;
