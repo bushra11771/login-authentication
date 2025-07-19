@@ -2,7 +2,7 @@
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import SuperAdminDashboard from '@components/SuperAdminDashboard';
+import SuperAdminDashboard from '../components/SuperAdminDashboard';
 
 function DashboardRoute() {
   const { user, isAuthenticated } = useSelector((state) => state.auth);

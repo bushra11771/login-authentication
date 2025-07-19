@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { loadDashboardData, logout, loadUser } from '@/store/authSlice';
+import {  logout, loadUserFromStorage } from '../../../redux/authSlice';
 
 const CustomerDashboard = () => {
   const dispatch = useDispatch();
@@ -9,13 +9,13 @@ const CustomerDashboard = () => {
 
   useEffect(() => {
     if (!user) {
-      dispatch(loadUser());
+      dispatch(loadUserFromStorage());
     }
-    dispatch(loadDashboardData());
+    dispatch(loadUserFromStorage());
   }, [dispatch, user]);
 
   const handleRefresh = () => {
-    dispatch(loadDashboardData());
+    dispatch(loadUserFromStorage());
   };
 
   const handleLogout = () => {

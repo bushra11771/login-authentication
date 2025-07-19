@@ -57,12 +57,16 @@ console.log('todoData:', todoData);
     }
   }
 );
+
 export const updateTodo = createAsyncThunk(
   'todos/updateTodo',
-  async ({ id, todoData }, { getState, rejectWithValue }) => {
+  async ({id, todoData, isFormData }, { getState, rejectWithValue }) => {
     try {
       const { auth } = getState();
       const config = { headers: { Authorization: `Bearer ${auth.token}` } };
+      if (isFormData) {
+        config.headers['Content-Type'] = 'multipart/form-data';
+      }
       const { data } = await axios.put(`/api/todos/${id}`, todoData, config);
       return data;
     } catch (error) {

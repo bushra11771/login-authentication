@@ -1,9 +1,9 @@
 "use client";
 import { useDispatch, useSelector } from "react-redux";
-import { ProtectedRoute } from "@/auth-system/pages/auth/ProtectedRoute";
 import { User } from "lucide-react";
-import { logout, loadDashboardData } from "@/store/authSlice";
+import { logout, loadUserFromStorage } from "../../../redux/authSlice";
 import { useEffect } from "react";
+import ProtectedRoute from "@app/app/ProtectedRoute";
 
 const ProviderDashboard = () => {
   const dispatch = useDispatch();
@@ -12,11 +12,11 @@ const ProviderDashboard = () => {
   const roles = [User.Provider];
 
   useEffect(() => {
-    dispatch(loadDashboardData());
+    dispatch(loadUserFromStorage());
   }, [dispatch]);
 
   const handleRefresh = () => {
-    dispatch(loadDashboardData());
+    dispatch(loadUserFromStorage());
   };
 
   const handleLogout = () => {

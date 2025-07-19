@@ -1,32 +1,22 @@
 "use client";
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import DashboardRoute from './dashboard/page';
-import ProtectedRoute from './ProtectedRoute';
-import SuperAdminDashboard from '../components/SuperAdminDashboard';
+import { useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
+import Dashboard from "../components/dashboard";
+import React from "react";
 
-function AppRoutes() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardRoute />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/users"
-          element={
-            <ProtectedRoute allowedRoles={['superadmin']}>
-              <SuperAdminDashboard />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </BrowserRouter>
-  );
+export default function HomePage() {
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const router = useRouter();
+
+  React.useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, router]);
+
+  if (!isAuthenticated) {
+    return null; // Or a loading spinner
+  }
+
+  return <Dashboard userRole={user?.role} />;
 }
-
-export default AppRoutes;
