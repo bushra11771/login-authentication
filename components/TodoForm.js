@@ -1,11 +1,13 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { addTodo } from '../redux/todoSlice';
-
+import { addTodo, clearLastAddedTodo } from '../redux/todoSlice';
+import { selectLastAddedTodo } from '../redux/todoSlice';
 
 export default function TodoForm() {
   const dispatch = useDispatch();
+  const lastAddedTodo = useSelector(selectLastAddedTodo);
+  const [notification, setNotification] = useState(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -27,7 +29,7 @@ export default function TodoForm() {
       };
       reader.readAsDataURL(file);
     }
-  }; 
+  };
 
   const handleRemoveImage = () => {
     setImageFile(null);
@@ -37,53 +39,63 @@ export default function TodoForm() {
     }
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError('');
+  useEffect(() => {
+    if (lastAddedTodo) {
+      setNotification({
+        type: 'success',
+        message: `Todo "${lastAddedTodo.title}" added successfully! Check your email for confirmation.`
+      });
 
-  if (!title.trim()) {
-    setError('Title is required');
-    return;
-  }
+      // Clear notification after 5 seconds
+      const timer = setTimeout(() => {
+        setNotification(null);
+        dispatch(clearLastAddedTodo());
+      }, 5000);
 
-  if (!user) {
-    setError('User not authenticated');
-    return;
-  }
+      return () => clearTimeout(timer);
+    }
+  }, [lastAddedTodo, dispatch]);
 
-  setIsUploading(true);
-  try {
-    const formData = new FormData();
-    formData.append('title', title);
-    formData.append('description', description);
-    if (dueDate) formData.append('dueDate', dueDate);
-    if (imageFile) formData.append('image', imageFile);
-    
-    // Add removeImage flag if image was removed
-    if (!imagePreview && fileInputRef.current?.value === '') {
-      formData.append('removeImage', 'true');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (!title.trim()) {
+      setError('Title is required');
+      return;
     }
 
-    const result = await dispatch(
-      addTodo(formData)
-    ).unwrap();
-
-    // Reset form
-    setTitle('');
-    setDescription('');
-    setDueDate('');
-    setImageFile(null);
-    setImagePreview('');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    if (!user) {
+      setError('User not authenticated');
+      return;
     }
-  } catch (error) {
-    console.error('Error:', error);
-    setError(error.message || 'Failed to add todo');
-  } finally {
-    setIsUploading(false);
-  }
-};
+
+    setIsUploading(true);
+    try {
+      // Yahan sirf plain object bhejein!
+      await dispatch(addTodo({
+        title,
+        description,
+        dueDate,
+        image: imageFile
+      })).unwrap();
+
+      // Reset form
+      setTitle('');
+      setDescription('');
+      setDueDate('');
+      setImageFile(null);
+      setImagePreview('');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setError(error.message || 'Failed to add todo');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -95,17 +107,29 @@ const handleSubmit = async (e) => {
         </div>
       )}
 
+      {notification && (
+        <div className={`p-4 mb-4 rounded ${
+          notification.type === 'success'
+            ? 'bg-green-100 text-green-800'
+            : 'bg-red-100 text-red-800'
+        }`}>
+          {notification.message}
+        </div>
+      )}
+
       <div>
         <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
           Title *
         </label>
         <input
+          name="title"
           id="title"
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Enter todo title"
+          required
         />
       </div>
 
@@ -142,7 +166,7 @@ const handleSubmit = async (e) => {
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Task Image
         </label>
-        
+
         <input
           type="file"
           ref={fileInputRef}
@@ -151,7 +175,7 @@ const handleSubmit = async (e) => {
           className="hidden"
           id="image-upload"
         />
-        
+
         <div className="flex flex-col items-center space-y-3">
           {imagePreview ? (
             <>
@@ -202,8 +226,9 @@ const handleSubmit = async (e) => {
       <button
         type="submit"
         className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        disabled={isUploading}
       >
-        Add Todo
+        {isUploading ? 'Adding...' : 'Add Todo'}
       </button>
     </form>
   );
