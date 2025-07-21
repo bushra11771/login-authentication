@@ -9,7 +9,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const dispatch = useDispatch();
   const router = useRouter();
-  const { loading, error,  isAuthenticated } = useSelector((state) => state.auth)
+  const { loading, error, isAuthenticated } = useSelector((state) => state.auth)
 
   // Check if user is already authenticated on component mount
   useEffect(() => {
@@ -25,10 +25,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = await dispatch(loginUser({ email, password }));
-    if (result.meta.requestStatus === 'fulfilled') {
-      router.push('/dashboard');
-    }
+    dispatch(loginUser({ email, password }));
   };
 
   return (
