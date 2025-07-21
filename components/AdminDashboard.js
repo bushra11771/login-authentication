@@ -25,7 +25,9 @@ const AdminDashboard = () => {
 
   const handleLogout = () => {
     dispatch(logout());
-    window.location.href = '/login';
+    if (typeof window !== "undefined") {
+      window.location.href = '/login';
+    }
   };
 
   if (dashboardStatus === 'loading' && !dashboardData) {

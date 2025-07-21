@@ -1,15 +1,22 @@
 "use client";
-import LoginPage from "./login/page";
+import { useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
+import Dashboard from "../components/dashboard";
+import React from "react";
 
+export default function HomePage() {
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const router = useRouter();
 
+  React.useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, router]);
 
-export default function Page({pageProps}) {
-  
+  if (!isAuthenticated) {
+    return null; // Or a loading spinner
+  }
 
-  return (
-    <>
-      
-      <LoginPage {...pageProps} />
-    </>
-  );
+  return <Dashboard userRole={user?.role} />;
 }

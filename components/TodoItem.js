@@ -18,7 +18,6 @@ export default function TodoItem({ todo }) {
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Clean up blob URLs when component unmounts
   useEffect(() => {
     return () => {
       if (editedTodo.imageUrl && editedTodo.imageUrl.startsWith('blob:')) {
@@ -72,53 +71,42 @@ export default function TodoItem({ todo }) {
   };
 
   const handleSave = async () => {
-    setIsSaving(true);
-    setError('');
+  setIsSaving(true);
+  setError('');
 
-    try {
-      // First upload the image if there's a new one selected
-      let finalImageUrl = editedTodo.imageUrl;
-      
-      // Check if there's a new file to upload (blob URL indicates new upload)
-      if (fileInputRef.current.files.length > 0 && editedTodo.imageUrl) {
-        const file = fileInputRef.current.files[0];
-        const formData = new FormData();
-        formData.append('image', file);
+  try {
+    let payload;
+    let isFormData = false;
 
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          throw new Error('Image upload failed');
-        }
-
-        const data = await response.json();
-        finalImageUrl = data.imageUrl;
-      }
-
-      // Prepare todo data for saving
-      const todoData = {
+    if (fileInputRef.current && fileInputRef.current.files.length > 0) {
+      isFormData = true;
+      const file = fileInputRef.current.files[0];
+      payload = new FormData();
+      payload.append('title', editedTodo.title);
+      payload.append('description', editedTodo.description);
+      payload.append('dueDate', editedTodo.dueDate);
+      payload.append('image', file);
+    } else {
+      payload = {
         title: editedTodo.title,
         description: editedTodo.description,
-        dueDate: editedTodo.dueDate ? new Date(editedTodo.dueDate) : null,
-        imageUrl: finalImageUrl
+        dueDate: editedTodo.dueDate,
       };
-
-      // Dispatch the update action
-      await dispatch(updateTodo({
-        id: todo._id,
-        todoData
-      })).unwrap();
-
-      setIsEditing(false);
-    } catch (error) {
-      setError(error.message || 'Failed to save todo');
-    } finally {
-      setIsSaving(false);
     }
-  };
+
+    await dispatch(updateTodo({
+      id: todo._id,
+      todoData: payload,
+      isFormData
+    })).unwrap();
+
+    setIsEditing(false);
+  } catch (error) {
+    setError(error.message || 'Failed to save todo');
+  } finally {
+    setIsSaving(false);
+  }
+};
 
   const handleDeleteClick = () => {
     setShowDeleteModal(true);
