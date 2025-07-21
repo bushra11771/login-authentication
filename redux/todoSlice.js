@@ -12,22 +12,18 @@ export const fetchTodos = createAsyncThunk(
     }
   }
 );
-export const addTodo = createAsyncThunk('todos/addTodo', async (todoData) => {
-  const response = await api.post('/todos', todoData);
-  return response.data;
-});
 
-// export const addTodo = createAsyncThunk(
-//   'todos/addTodo',
-//   async (todoData, { rejectWithValue }) => {
-//     try {
-//       const response = await api.post('/todos', todoData);
-//       return response.data;  
-//     } catch (error) {
-//       return rejectWithValue(error.response.data);
-//     }
-//   }
-// );
+export const addTodo = createAsyncThunk(
+  'todos/addTodo',
+  async (todoData, { rejectWithValue }) => {
+    try {
+      const response = await api.post('/todos', todoData);
+      return response.data;  
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
 
 export const updateTodo = createAsyncThunk(
   'todos/updateTodo',
@@ -56,7 +52,6 @@ export const deleteTodo = createAsyncThunk(
 const todoSlice = createSlice({
   name: 'todos',
   initialState: {
-    user: null,
     items: [],
     status: 'idle',
     error: null,
@@ -67,7 +62,7 @@ const todoSlice = createSlice({
       .addCase(fetchTodos.pending, (state) => {
         state.status = 'loading';
       })
-      .addCase(addTodo.fulfilled, (state, action) => {
+      .addCase(fetchTodos.fulfilled, (state, action) => {
         state.status = 'succeeded';
         state.items = action.payload;
       })
@@ -75,7 +70,17 @@ const todoSlice = createSlice({
         state.status = 'failed';
         state.error = action.payload?.message || 'Failed to fetch todos';
       })
-  
+      .addCase(addTodo.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(addTodo.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.items = [...state.items, action.payload]; 
+      })
+      .addCase(addTodo.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload?.message || 'Failed to add todo';
+      })
       .addCase(updateTodo.fulfilled, (state, action) => {
         const index = state.items.findIndex(todo => todo._id === action.payload._id);
         if (index !== -1) {

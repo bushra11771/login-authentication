@@ -2,7 +2,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { ProtectedRoute } from "@/auth-system/pages/auth/ProtectedRoute";
 import { User } from "lucide-react";
-// import { logout, loadDashboardData } from "@/store/features/auth/authSlice";
+import { logout } from "@app/redux/authSlice";
 import { useEffect } from "react";
 
 const AdminDashboard = () => {
