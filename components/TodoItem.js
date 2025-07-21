@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { updateTodo, deleteTodo } from '../redux/todoSlice';
 import { format } from 'date-fns';
@@ -14,6 +14,18 @@ export default function TodoItem({ todo }) {
   });
   const [error, setError] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const fileInputRef = useRef(null);
+
+  // Clean up blob URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      if (editedTodo.imageUrl && editedTodo.imageUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(editedTodo.imageUrl);
+      }
+    };
+  }, [editedTodo.imageUrl]);
 
   const handleToggleComplete = async () => {
     try {
@@ -34,20 +46,77 @@ export default function TodoItem({ todo }) {
     });
   };
 
-  const handleSave = async () => {
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setError('');
+
     try {
-      const todoData = {
-        ...editedTodo,
-        dueDate: editedTodo.dueDate ? new Date(editedTodo.dueDate) : null
-      };
+      // Create preview URL while waiting for upload
+      const previewUrl = URL.createObjectURL(file);
+      setEditedTodo(prev => ({ ...prev, imageUrl: previewUrl }));
+    } catch (err) {
+      setError('Failed to create image preview');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    if (editedTodo.imageUrl && editedTodo.imageUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(editedTodo.imageUrl);
+    }
+    setEditedTodo({ ...editedTodo, imageUrl: '' });
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setError('');
+
+    try {
+      // First upload the image if there's a new one selected
+      let finalImageUrl = editedTodo.imageUrl;
       
+      // Check if there's a new file to upload (blob URL indicates new upload)
+      if (fileInputRef.current.files.length > 0 && editedTodo.imageUrl) {
+        const file = fileInputRef.current.files[0];
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Image upload failed');
+        }
+
+        const data = await response.json();
+        finalImageUrl = data.imageUrl;
+      }
+
+      // Prepare todo data for saving
+      const todoData = {
+        title: editedTodo.title,
+        description: editedTodo.description,
+        dueDate: editedTodo.dueDate ? new Date(editedTodo.dueDate) : null,
+        imageUrl: finalImageUrl
+      };
+
+      // Dispatch the update action
       await dispatch(updateTodo({
         id: todo._id,
         todoData
       })).unwrap();
+
       setIsEditing(false);
     } catch (error) {
-      setError(error.message || 'Failed to update todo');
+      setError(error.message || 'Failed to save todo');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -102,13 +171,77 @@ export default function TodoItem({ todo }) {
               className="px-3 py-2 border border-gray-300 rounded-md text-sm"
             />
           </div>
+
+          {/* Image upload section */}
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Task Image
+            </label>
+            
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+              accept="image/*"
+              className="hidden"
+              id="image-upload"
+            />
+            
+            <div className="flex flex-col items-center space-y-3">
+              {editedTodo.imageUrl ? (
+                <>
+                  <img
+                    src={editedTodo.imageUrl}
+                    alt="Preview"
+                    className="max-h-40 max-w-full rounded-md object-contain border border-gray-200"
+                  />
+                  <div className="flex space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current.click()}
+                      className="px-3 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 text-sm"
+                      disabled={isUploading}
+                    >
+                      {isUploading ? 'Uploading...' : 'Change Image'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 text-sm"
+                    >
+                      Remove Image
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="text-gray-400 mb-2">
+                    <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <p className="text-center mt-1">No image selected</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current.click()}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                    disabled={isUploading}
+                  >
+                    {isUploading ? 'Uploading...' : 'Select Image'}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
           <div className="flex justify-between items-center pt-2">
             <div className="flex space-x-4">
               <button
                 onClick={handleSave}
                 className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                disabled={isUploading || isSaving}
               >
-                Save
+                {isSaving ? 'Saving...' : 'Save'}
               </button>
               <button
                 onClick={() => setIsEditing(false)}
@@ -153,6 +286,17 @@ export default function TodoItem({ todo }) {
             <p className={`text-sm text-gray-600 ${todo.completed ? 'line-through' : ''}`}>
               {todo.description}
             </p>
+          )}
+          
+          {todo.imageUrl && (
+            <div className="mt-3 border border-gray-200 rounded-lg p-2">
+              <h4 className="text-sm font-medium text-gray-700 mb-1">Attached Image:</h4>
+              <img 
+                src={todo.imageUrl} 
+                alt="Task attachment" 
+                className="max-h-48 w-full object-contain rounded-md"
+              />
+            </div>
           )}
           
           {todo.dueDate && (

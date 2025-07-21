@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../components/api';
+import axios from 'axios';
 
 export const fetchTodos = createAsyncThunk(
   'todos/fetchTodos',
@@ -15,15 +16,50 @@ export const fetchTodos = createAsyncThunk(
 
 export const addTodo = createAsyncThunk(
   'todos/addTodo',
-  async (todoData, { rejectWithValue }) => {
+  async (todoData, { getState, rejectWithValue }) => {
     try {
-      const response = await api.post('/todos', todoData);
-      return response.data;  
-    } catch (error) {
-      return rejectWithValue(error.response.data);
+      const { auth } = getState();
+      const token = auth?.token;
+
+      const response = await axios.post('/api/todos', todoData, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+      });
+      return response.data;
+    } catch (err) {
+      if (err.response) {
+        return rejectWithValue(err.response.data);
+      }
+      return rejectWithValue({ message: err.message });
     }
   }
 );
+
+// export const addTodo = createAsyncThunk(
+//   'todos/addTodo',
+//   async (todoData, { getState, rejectWithValue }) => {
+//     try {
+//       const { auth } = getState(); // Get the current Redux state
+//       const token = auth?.token; // Extract token from auth state
+
+//       const response = await axios.post('/api/todos', todoData, {
+//         headers: {
+//           'Content-Type': 'multipart/form-data',
+//           'Authorization': `Bearer ${token}` 
+//         },
+//       });
+//       return response.data;
+//     } catch (err) {
+//       // Error handling remains the same
+//       if (err.response) {
+//         return rejectWithValue(err.response.data);
+//       }
+//       return rejectWithValue({ message: err.message });
+//     }
+//   }
+// );
+
 
 export const updateTodo = createAsyncThunk(
   'todos/updateTodo',
