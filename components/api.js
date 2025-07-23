@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://auth-login-backend-8j45wnwtq-bushra11771s-projects.vercel.app/',
+  baseURL: 'https://auth-login-backend.vercel.app/',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

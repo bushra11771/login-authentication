@@ -3,7 +3,7 @@ import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 
 const api = axios.create({
-  baseURL: 'https://auth-login-backend-8j45wnwtq-bushra11771s-projects.vercel.app/',
+  baseURL: 'https://auth-login-backend.vercel.app/',
   withCredentials: true, 
   headers: {
     'Content-Type': 'application/json',
