@@ -1,34 +1,42 @@
+// api.js or wherever you configure your axios instance
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+  baseURL: 'https://auth-login-backend-8j45wnwtq-bushra11771s-projects.vercel.app/',
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true, // Important for CORS with credentials
 });
 
-// Add request interceptor to include auth token
-api.interceptors.request.use((config) => {
-  const authData = localStorage.getItem('authData');
-  let token = null;
-  if (authData) {
-    try {
-      token = JSON.parse(authData).token;
-    } catch (e) {
-      token = null;
-    }
-  }
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-}, (error) => {
-  return Promise.reject(error);
-});
-
-api.interceptors.response.use(
-  (response) => response,
+// Request interceptor
+api.interceptors.request.use(
+  (config) => {
+    console.log('Making request to:', config.baseURL + config.url);
+    console.log('Request config:', config);
+    return config;
+  },
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('authData');
-      window.location.href = '/login';
+    console.error('Request error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor
+api.interceptors.response.use(
+  (response) => {
+    console.log('Response received:', response);
+    return response;
+  },
+  (error) => {
+    console.error('Response error:', error);
+    if (error.response) {
+      console.error('Error response data:', error.response.data);
+      console.error('Error response status:', error.response.status);
+      console.error('Error response headers:', error.response.headers);
+    } else if (error.request) {
+      console.error('Error request:', error.request);
     }
     return Promise.reject(error);
   }
